@@ -135,6 +135,7 @@ for ti in text_input:
         short_name = ''
     tasks.append(Entry(name, parts['length'], short_name))
 
+tasks = [t for t in tasks if len(t.name)]
 # pprint(tasks)
 
 # today = datetime.date.today()
@@ -178,6 +179,8 @@ reset = '\033[0m'
 if args.output_html:
     blue = '<font color="blue">'
     reset = '</font>'
+
+
 for task in tasks:
     half_open_adjustment = dateutil.relativedelta.relativedelta(days=+1)
     cals = []
@@ -258,27 +261,25 @@ for task in tasks:
                 print ' ' * (cal_width - actual_len - 1),
             if l.find(blue) != -1 and l.find(reset) != -1:
                 print u'  {}\u2502{} '.format(blue, reset),
-                is_blue = False
             elif l.find(blue) == -1 and l.find(reset) != -1:
                 print u'  {}\u2502{} '.format(blue, reset),
-                is_blue = False
             elif l.find(blue) != -1 and l.find(reset) == -1:
                 print u'  \u2502 ',
-                is_blue = True
             else:
                 print u'  \u2502 ',
+
+            if formatted_cal.find(blue) != -1:
+                is_blue = True
+            if formatted_cal.find(reset) != -1:
+                is_blue = False
         else:
             print cal_format.format(''),
             print u'  \u2502 ',
 
-        if is_blue:
-            print reset,
         if i < len(name):
-            print '{:<60}'.format(name[i].strip()),
+            print '{}{:<60}{}'.format(is_blue and reset or '', name[i].strip(), is_blue and blue or ''),
         else:
             print '{:<60}'.format(''),
-        if is_blue:
-            print blue,
 
         print ''
     print '\n'
