@@ -241,7 +241,16 @@ if args.output_html:
 
 table = []
 for task in tasks:
-    name = [''] + textwrap.wrap(task.name, 40)
+    name = ['']
+    regex = re.compile(r'^(\s*)(\d+\.|-|\*) .*')
+    for line in task.name.split('\n'):
+        m = regex.search(line)
+        print line, m
+        if m:
+            indent = ' '*(len(m.group(1)) + len(m.group(2)) + 1)
+            name += textwrap.wrap(line.strip(), 60, initial_indent=' '*len(m.group(1)), subsequent_indent=indent)
+        else:
+            name += textwrap.wrap(line, 60)
     cals = task.cals.split('\n')
 
     lines = max(len(name), len(cals))
@@ -277,7 +286,7 @@ for task in tasks:
             print u'  \u2502 ',
 
         if i < len(name):
-            print '{}{:<60}{}'.format(is_blue and reset or '', name[i].strip(), is_blue and blue or ''),
+            print '{}{:<60}{}'.format(is_blue and reset or '', name[i], is_blue and blue or ''),
         else:
             print '{:<60}'.format(''),
 
