@@ -245,12 +245,11 @@ for task in tasks:
     regex = re.compile(r'^(\s*)(\d+\.|-|\*) .*')
     for line in task.name.split('\n'):
         m = regex.search(line)
-        print line, m
         if m:
             indent = ' '*(len(m.group(1)) + len(m.group(2)) + 1)
-            name += textwrap.wrap(line.strip(), 60, initial_indent=' '*len(m.group(1)), subsequent_indent=indent)
+            name += textwrap.wrap(line.strip(), 60, initial_indent=' '*len(m.group(1)), subsequent_indent=indent, break_on_hyphens=True, break_long_words=False)
         else:
-            name += textwrap.wrap(line, 60)
+            name += textwrap.wrap(line, 60, break_on_hyphens=True, break_long_words=False)
     cals = task.cals.split('\n')
 
     lines = max(len(name), len(cals))
@@ -263,7 +262,10 @@ for task in tasks:
     is_blue = False
     for i in range(lines):
         if i < len(cals):
-            formatted_cal = cal_format.format(cals[i])
+            b = ''
+            if is_blue:
+                b = blue
+            formatted_cal = b + cal_format.format(cals[i])
             print formatted_cal,
             actual_len = len(formatted_cal.replace(blue, '').replace(reset, ''))
             if actual_len < cal_width:
@@ -286,12 +288,12 @@ for task in tasks:
             print u'  \u2502 ',
 
         if i < len(name):
-            print '{}{:<60}{}'.format(is_blue and reset or '', name[i], is_blue and blue or ''),
+            print '{}{:<60}'.format(reset, name[i]),
         else:
             print '{:<60}'.format(''),
 
-        print ''
-    print '\n'
+        print '{}'.format(reset)
+    print '{}\n'.format(reset)
 
 html_footer = '''
 </pre>
