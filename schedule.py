@@ -78,8 +78,9 @@ def to_span(input_string):
         return DateSpan(begin, dateutil.relativedelta.relativedelta(days=+1))
 
 # get holidays
+holiday_files = [i for i in args.inputs if i.endswith('.HOL')]
 holidays = []
-for hol in glob('*.HOL'):
+for hol in holiday_files:
     for line in open(hol, 'rb').readlines()[1:]:
         line = line.strip()
         if len(line) == 0:
@@ -98,9 +99,10 @@ for hol in glob('*.HOL'):
     # print entry
 
 
-
+# Grab all command line args that don't end with .HOL
+input_args = [i for i in args.inputs if not i.endswith('.HOL')]
 text_input = []
-for argv in args.inputs:
+for argv in input_args:
     if os.path.exists(argv):
         text_input.append(open(argv, 'rb').read())
     else:
