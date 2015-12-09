@@ -22,6 +22,8 @@ argparser.add_argument('--start', dest='start', default=datetime.date.today(),
                        help='start date')
 argparser.add_argument('--output_html', dest='output_html', action='store_true',
                        default=False, help='ascii codes or html')
+argparser.add_argument('--no_align', dest='align', action='store_false',
+                       default=True, help='align work if vacation gaps are detected')
 args = argparser.parse_args()
 
 class DateSpan:
@@ -152,6 +154,13 @@ def next_weekday(now):
         if now.weekday() < 5:
             return now
 
+def next_non_masked_weekday(now):
+    while True:
+        now = now + dateutil.relativedelta.relativedelta(days=+1)
+        masks = [hol for hol in holidays if hol.span.overlaps(DateSpan(now, 1))]
+        if now.weekday() < 5 and not any(masks):
+            return now
+
 if type(args.start) == str:
     args.start = parser.parse(args.start, fuzzy=True).date()
 now = args.start
@@ -160,12 +169,16 @@ if now.weekday() >= 5:
 for task in tasks:
     begin = None
     end = None
-    for day in range(task.length):
+    day = 0
+    num_masks = 0
+    while day < task.length:
         while True:
             masks = [hol for hol in holidays if hol.span.overlaps(DateSpan(now, 1))]
             if any(masks):
                 # print 'task was masked', task, masks[0]
                 now = next_weekday(now)
+                if begin != None:
+                    num_masks += 1
             else:
                 break
         # print 'scheduled ', task, 'on', now
@@ -173,6 +186,21 @@ for task in tasks:
             begin = now
         now = next_weekday(now)
         end = now
+
+        day += 1
+
+        # Handle alignment
+        if args.align and (num_masks > task.length):
+            # find first non-masked Monday and restart
+            orig = begin
+            begin = next_non_masked_weekday(begin)
+            while begin.weekday() != 0:
+                begin = next_non_masked_weekday(begin)
+            day = 0
+            now = begin
+            num_masks = 0
+            print 'Adjusting', task.short_name, 'was', orig, 'now', now
+
     task.begin = begin
     task.end = end
 
