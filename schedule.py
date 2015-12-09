@@ -189,7 +189,7 @@ for task in tasks:
 
     cal = calendar.TextCalendar(calendar.SUNDAY)
     text = cal.formatmonth(task.begin.year, task.begin.month)
-    regex = re.compile(r'(\b|^){}(\b|$)'.format(task.begin.day))
+    regex = re.compile(r'(\b|^){0}(\b|$)'.format(task.begin.day))
     m = regex.search(text)
     text = text[:m.start()] + blue + text[m.start():]
 
@@ -220,7 +220,7 @@ for task in tasks:
             m = regex.search(text)
             text = text[:m.start()] + blue + text[m.start():]
 
-            regex = re.compile(r'(\b|^){}(\b|$)'.format((task.end - half_open_adjustment).day))
+            regex = re.compile(r'(\b|^){0}(\b|$)'.format((task.end - half_open_adjustment).day))
             m = regex.search(text)
             text = text[:m.end()] + reset + text[m.end():]
             cals.append(text)
@@ -255,11 +255,11 @@ for task in tasks:
     cals = task.cals.split('\n')
 
     lines = max(len(name), len(cals))
-    cal_width = max(*[len(re.sub('{}|{}'.format(re.escape(blue), re.escape(reset)), '', l)) for l in cals])
-    cal_format = '{{: <{}}}'.format(cal_width)
+    cal_width = max(*[len(re.sub('{0}|{1}'.format(re.escape(blue), re.escape(reset)), '', l)) for l in cals])
+    cal_format = '{{0: <{0}}}'.format(cal_width)
 
-    date_range = '{} [{},{})'.format(task.short_name, task.begin, task.end)
-    print '{: ^80}'.format(date_range)
+    date_range = '{0} [{1},{2})'.format(task.short_name, task.begin, task.end)
+    print '{0: ^80}'.format(date_range)
     print u'\u2500' * 80
     is_blue = False
     for i in range(lines):
@@ -273,9 +273,9 @@ for task in tasks:
             if actual_len < cal_width:
                 print ' ' * (cal_width - actual_len - 1),
             if l.find(blue) != -1 and l.find(reset) != -1:
-                print u'  {}\u2502{} '.format(blue, reset),
+                print u'  {0}\u2502{1} '.format(blue, reset),
             elif l.find(blue) == -1 and l.find(reset) != -1:
-                print u'  {}\u2502{} '.format(blue, reset),
+                print u'  {0}\u2502{1} '.format(blue, reset),
             elif l.find(blue) != -1 and l.find(reset) == -1:
                 print u'  \u2502 ',
             else:
@@ -290,12 +290,10 @@ for task in tasks:
             print u'  \u2502 ',
 
         if i < len(name):
-            print '{}{}'.format(reset, name[i]),
-        else:
-            print '{}'.format(''),
+            print '{0}{1}'.format(reset, name[i]),
 
-        print '{}'.format(reset)
-    print '{}\n'.format(reset)
+        print '{0}'.format(reset)
+    print '{0}\n'.format(reset)
 
 html_footer = '''
 </pre>
