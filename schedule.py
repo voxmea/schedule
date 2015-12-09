@@ -199,7 +199,6 @@ for task in tasks:
             day = 0
             now = begin
             num_masks = 0
-            print 'Adjusting', task.short_name, 'was', orig, 'now', now
 
     task.begin = begin
     task.end = end
