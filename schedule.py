@@ -23,7 +23,7 @@ argparser.add_argument('--start', dest='start', default=datetime.date.today(),
 argparser.add_argument('--output_html', dest='output_html', action='store_true',
                        default=False, help='ascii codes or html')
 argparser.add_argument('--no_align', dest='align', action='store_false',
-                       default=True, help='align work if vacation gaps are detected')
+                       default=True, help='align work if large vacation gaps are detected')
 args = argparser.parse_args()
 
 class DateSpan:
