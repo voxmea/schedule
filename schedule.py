@@ -299,11 +299,11 @@ for task in tasks:
             actual_len = len(formatted_cal.replace(blue, '').replace(reset, ''))
             if actual_len < cal_width:
                 print ' ' * (cal_width - actual_len - 1),
-            if l.find(blue) != -1 and l.find(reset) != -1:
+            if formatted_cal.find(blue) != -1 and formatted_cal.find(reset) != -1:
                 print u'  {0}\u2502{1} '.format(blue, reset),
-            elif l.find(blue) == -1 and l.find(reset) != -1:
+            elif formatted_cal.find(blue) == -1 and formatted_cal.find(reset) != -1:
                 print u'  {0}\u2502{1} '.format(blue, reset),
-            elif l.find(blue) != -1 and l.find(reset) == -1:
+            elif formatted_cal.find(blue) != -1 and formatted_cal.find(reset) == -1:
                 print u'  \u2502 ',
             else:
                 print u'  \u2502 ',
