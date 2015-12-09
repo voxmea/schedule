@@ -121,6 +121,8 @@ for ti in text_input:
     except ValueError:
         desc = ti
         duration = '1 day'
+    if desc.startswith('--'):
+        desc = desc[2:]
     m = duration_regex.match(duration.strip())
     if not m:
         print >> sys.stderr, 'WARNING: could not parse task line; exiting'
@@ -133,7 +135,7 @@ for ti in text_input:
         parts['length'] = parts['length'] * 5
         parts['kind'] = 'days'
     try:
-        name, short_name = desc.rsplit(':', 1)
+        short_name, name = desc.split('--', 1)
     except ValueError:
         name = desc
         short_name = ''
