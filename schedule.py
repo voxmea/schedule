@@ -288,9 +288,9 @@ for task in tasks:
             print u'  \u2502 ',
 
         if i < len(name):
-            print '{}{:<60}'.format(reset, name[i]),
+            print '{}{}'.format(reset, name[i]),
         else:
-            print '{:<60}'.format(''),
+            print '{}'.format(''),
 
         print '{}'.format(reset)
     print '{}\n'.format(reset)
