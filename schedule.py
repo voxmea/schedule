@@ -116,6 +116,8 @@ text_input = [i.strip() for i in re.split(r'(?m)^\s*$\s*', text_input)]
 duration_regex = re.compile(r'(?P<length>\d+)\s+(?P<kind>(weeks?|days?))')
 tasks = []
 for ti in text_input:
+    if ti.strip() == '~!~':
+        break
     try:
         desc, duration = ti.rsplit(':', 1)
     except ValueError:
@@ -211,6 +213,10 @@ if args.output_html:
     blue = '<font color="blue">'
     reset = '</font>'
 
+def bail_if_none(m, text):
+    if not m:
+        raise RuntimeError('Error processing "{0}"'.format(text))
+    return m
 
 for task in tasks:
     half_open_adjustment = dateutil.relativedelta.relativedelta(days=+1)
@@ -219,7 +225,7 @@ for task in tasks:
     cal = calendar.TextCalendar(calendar.SUNDAY)
     text = cal.formatmonth(task.begin.year, task.begin.month)
     regex = re.compile(r'(\b|^){0}(\b|$)'.format(task.begin.day))
-    m = regex.search(text)
+    m = bail_if_none(regex.search(text), text)
     text = text[:m.start()] + blue + text[m.start():]
 
     if (task.begin.year == task.end.year) and (task.begin.month == task.end.month):
@@ -239,18 +245,18 @@ for task in tasks:
         while (month < task.end) and (month.month != task.end.month):
             text = cal.formatmonth(month.year, month.month)
             regex = re.compile(r'(\b|^)1(\b|$)')
-            m = regex.search(text)
+            m = bail_if_none(regex.search(text), text)
             text = text[:m.start()] + blue + text[m.start():-1] + reset + text[-1:]
             month = month + dateutil.relativedelta.relativedelta(months=+1)
             cals.append(text)
         if month.month == task.end.month:
             text = cal.formatmonth(month.year, month.month)
             regex = re.compile(r'(\b|^)1(\b|$)')
-            m = regex.search(text)
+            m = bail_if_none(regex.search(text), text)
             text = text[:m.start()] + blue + text[m.start():]
 
             regex = re.compile(r'(\b|^){0}(\b|$)'.format((task.end - half_open_adjustment).day))
-            m = regex.search(text)
+            m = bail_if_none(regex.search(text), text)
             text = text[:m.end()] + reset + text[m.end():]
             cals.append(text)
 
