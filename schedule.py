@@ -53,10 +53,11 @@ class Entry:
     short_name = None
     length = None
 
-    def __init__(self, name, length, short_name = name):
+    def __init__(self, name, length, short_name = name, tag = ''):
         self.name = name.strip()
         self.length = length
         self.short_name = short_name
+        self.tag = tag
 
     def __repr__(self):
         return '{} - {}'.format(self.name, self.length)
@@ -113,9 +114,11 @@ for argv in input_args:
 text_input = '\n\n'.join(text_input)
 text_input = [i.strip() for i in re.split(r'(?m)^\s*$\s*', text_input)]
 
-duration_regex = re.compile(r'(?P<length>\d+)\s+(?P<kind>(weeks?|days?))')
+duration_regex = re.compile(r'(?P<length>\d+)\s+(?P<kind>(weeks?|days?))\s*(\s*\((?P<tag>\w+)\s*\))?')
 tasks = []
 for ti in text_input:
+    if ti.strip() == '':
+        continue
     if ti.strip() == '~!~':
         break
     try:
@@ -127,7 +130,7 @@ for ti in text_input:
         desc = desc[2:]
     m = duration_regex.match(duration.strip())
     if not m:
-        print >> sys.stderr, 'WARNING: could not parse task line; exiting'
+        print >> sys.stderr, 'WARNING: could not parse task line; exiting.'
         print >> sys.stderr, ti
         print >> sys.stderr, duration
         sys.exit(1)
@@ -141,7 +144,10 @@ for ti in text_input:
     except ValueError:
         name = desc
         short_name = ''
-    tasks.append(Entry(name, parts['length'], short_name))
+    tag = ''
+    if 'tag' in parts:
+        tag = parts['tag']
+    tasks.append(Entry(name, parts['length'], short_name, tag))
 
 tasks = [t for t in tasks if len(t.name)]
 # pprint(tasks)
@@ -170,7 +176,12 @@ if type(args.start) == str:
 now = args.start
 if now.weekday() >= 5:
     now = next_weekday(now)
+# start each task
+tags = {}
+for tag in set([task.tag for task in tasks]):
+    tags[tag] = now
 for task in tasks:
+    now = tags[task.tag]
     begin = None
     end = None
     day = 0
@@ -206,6 +217,7 @@ for task in tasks:
 
     task.begin = begin
     task.end = end
+    tags[task.tag] = end
 
 blue = '\033[94m'
 reset = '\033[0m'
@@ -277,6 +289,7 @@ if args.output_html:
     print html_header
 
 table = []
+tasks = sorted(tasks, key=lambda t: t.tag)
 for task in tasks:
     name = ['']
     regex = re.compile(r'^(\s*)(\d+\.|-|\*) .*')
@@ -293,7 +306,7 @@ for task in tasks:
     cal_width = max(*[len(re.sub('{0}|{1}'.format(re.escape(blue), re.escape(reset)), '', l)) for l in cals])
     cal_format = '{{0: <{0}}}'.format(cal_width)
 
-    date_range = '{0} [{1},{2})'.format(task.short_name, task.begin, task.end)
+    date_range = '{3} {0} [{1},{2})'.format(task.short_name, task.begin, task.end, task.tag and (task.tag + ' -') or '')
     print '{0: ^80}'.format(date_range)
     print u'\u2500' * 80
     is_blue = False
