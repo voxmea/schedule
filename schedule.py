@@ -46,7 +46,7 @@ class DateSpan:
         min_end = min(self.begin + self.end, other.begin + other.end)
         return (min_end - max_start).days > 0
 
-Holiday = namedtuple('Holiday', ['name', 'span'])
+Holiday = namedtuple('Holiday', ['name', 'span', 'tag'])
 
 class Entry:
     name = None
@@ -84,6 +84,10 @@ def to_span(input_string):
 holiday_files = [i for i in args.inputs if i.endswith('.HOL')]
 holidays = []
 for hol in holiday_files:
+    lines = open(hol, 'rb').readlines()
+    if len(lines) == 0:
+        continue
+    tag = open(hol, 'rb').readlines()[0]
     for line in open(hol, 'rb').readlines()[1:]:
         line = line.strip()
         if len(line) == 0:
@@ -94,13 +98,12 @@ for hol in holiday_files:
             continue
         try:
             span = to_span(parts[-1])
-            holidays.append(Holiday(name=parts[0], span=span))
+            holidays.append(Holiday(name=parts[0], span=span, tag=tag.strip()))
         except ValueError, ex:
             continue
 
 # for entry in holidays:
     # print entry
-
 
 # Grab all command line args that don't end with .HOL
 input_args = [i for i in args.inputs if not i.endswith('.HOL')]
@@ -152,6 +155,17 @@ for ti in text_input:
     tasks.append(Entry(name, parts['length'], short_name, tag))
 
 tasks = [t for t in tasks if len(t.name)]
+
+# Now, adjust holidays based on any tag matches
+tags = set([task.tag for task in tasks])
+task_adjusted_holidays = []
+for holiday in holidays:
+    if holiday.tag not in tags:
+        task_adjusted_holidays.append(Holiday(name=holiday.name, span=holiday.span, tag=None))
+    else:
+        task_adjusted_holidays.append(Holiday(name=holiday.name, span=holiday.span, tag=holiday.tag))
+holidays = task_adjusted_holidays
+
 # pprint(tasks)
 
 # today = datetime.date.today()
@@ -166,10 +180,21 @@ def next_weekday(now):
         if now.weekday() < 5:
             return now
 
-def next_non_masked_weekday(now):
+def get_holiday_masks(now, tag):
+    masks = []
+    for holiday in holidays:
+        # First check tag
+        if holiday.tag and (holiday.tag != tag):
+            continue
+        if holiday.span.overlaps(DateSpan(now, 1)):
+            masks.append(holiday)
+    #masks = [hol for hol in holidays if (hol.span.overlaps(DateSpan(now, 1)) and (hol.tag  hol.tag == )]
+    return masks
+
+def next_non_masked_weekday(now, tag):
     while True:
         now = now + dateutil.relativedelta.relativedelta(days=+1)
-        masks = [hol for hol in holidays if hol.span.overlaps(DateSpan(now, 1))]
+        masks = get_holiday_masks(now, tag)
         if now.weekday() < 5 and not any(masks):
             return now
 
@@ -190,7 +215,7 @@ for task in tasks:
     num_masks = 0
     while day < task.length:
         while True:
-            masks = [hol for hol in holidays if hol.span.overlaps(DateSpan(now, 1))]
+            masks = get_holiday_masks(now, task.tag)
             if any(masks):
                 # print 'task was masked', task, masks[0]
                 now = next_weekday(now)
@@ -210,7 +235,7 @@ for task in tasks:
         if args.align and (num_masks > task.length):
             # find first non-masked Monday and restart
             orig = begin
-            begin = next_non_masked_weekday(begin)
+            begin = next_non_masked_weekday(begin, task.tag)
             # while begin.weekday() != 0:
                 # begin = next_non_masked_weekday(begin)
             day = 0
