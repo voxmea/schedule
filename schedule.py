@@ -119,6 +119,8 @@ tasks = []
 for ti in text_input:
     if ti.strip() == '':
         continue
+    if ti.startswith('#') and '\n' not in ti:
+        continue
     if ti.strip() == '~!~':
         break
     try:
@@ -209,8 +211,8 @@ for task in tasks:
             # find first non-masked Monday and restart
             orig = begin
             begin = next_non_masked_weekday(begin)
-            while begin.weekday() != 0:
-                begin = next_non_masked_weekday(begin)
+            # while begin.weekday() != 0:
+                # begin = next_non_masked_weekday(begin)
             day = 0
             now = begin
             num_masks = 0
@@ -270,7 +272,7 @@ for task in tasks:
                 m = bail_if_none(regex, text)
                 text = text[:m.start()] + blue + text[m.start():]
 
-                search = r'(\b|^){0}(\b|$)'.format((task.end - half_open_adjustment).day)
+                search = r'(\b|^|{1}){0}(\b|$)'.format((task.end - half_open_adjustment).day, re.escape(blue))
                 regex = re.compile(search)
                 m = bail_if_none(regex, text)
                 text = text[:m.end()] + reset + text[m.end():]
