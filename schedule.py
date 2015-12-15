@@ -296,7 +296,13 @@ if args.output_html:
 
 table = []
 tasks = sorted(tasks, key=lambda t: t.tag)
+tag = None
 for task in tasks:
+
+    if tag and task.tag != tag:
+        print '-' * 80, '\n'
+    tag = task.tag
+
     name = ['']
     regex = re.compile(r'^(\s*)(\d+\.|-|\*) .*')
     for line in task.name.split('\n'):
