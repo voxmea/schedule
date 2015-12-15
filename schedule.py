@@ -225,9 +225,10 @@ if args.output_html:
     blue = '<font color="blue">'
     reset = '</font>'
 
-def bail_if_none(m, text):
+def bail_if_none(regex, text):
+    m = regex.search(text)
     if not m:
-        raise RuntimeError('Error processing "{0}"'.format(text))
+        raise RuntimeError('Error processing "{0}" - "{1}"'.format(regex.pattern, text))
     return m
 
 for task in tasks:
@@ -237,7 +238,7 @@ for task in tasks:
     cal = calendar.TextCalendar(calendar.SUNDAY)
     text = cal.formatmonth(task.begin.year, task.begin.month)
     regex = re.compile(r'(\b|^){0}(\b|$)'.format(task.begin.day))
-    m = bail_if_none(regex.search(text), text)
+    m = bail_if_none(regex, text)
     text = text[:m.start()] + blue + text[m.start():]
 
     if (task.begin.year == task.end.year) and (task.begin.month == task.end.month):
@@ -257,20 +258,23 @@ for task in tasks:
         while (month < task.end) and (month.month != task.end.month):
             text = cal.formatmonth(month.year, month.month)
             regex = re.compile(r'(\b|^)1(\b|$)')
-            m = bail_if_none(regex.search(text), text)
+            m = bail_if_none(regex, text)
             text = text[:m.start()] + blue + text[m.start():-1] + reset + text[-1:]
             month = month + dateutil.relativedelta.relativedelta(months=+1)
             cals.append(text)
         if month.month == task.end.month:
-            text = cal.formatmonth(month.year, month.month)
-            regex = re.compile(r'(\b|^)1(\b|$)')
-            m = bail_if_none(regex.search(text), text)
-            text = text[:m.start()] + blue + text[m.start():]
+            adjusted_end = task.end - half_open_adjustment
+            if adjusted_end.month == task.end.month:
+                text = cal.formatmonth(month.year, month.month)
+                regex = re.compile(r'(\b|^)1(\b|$)')
+                m = bail_if_none(regex, text)
+                text = text[:m.start()] + blue + text[m.start():]
 
-            regex = re.compile(r'(\b|^){0}(\b|$)'.format((task.end - half_open_adjustment).day))
-            m = bail_if_none(regex.search(text), text)
-            text = text[:m.end()] + reset + text[m.end():]
-            cals.append(text)
+                search = r'(\b|^){0}(\b|$)'.format((task.end - half_open_adjustment).day)
+                regex = re.compile(search)
+                m = bail_if_none(regex, text)
+                text = text[:m.end()] + reset + text[m.end():]
+                cals.append(text)
 
     task.cals = ''.join(cals)
 
@@ -294,7 +298,7 @@ for task in tasks:
     name = ['']
     regex = re.compile(r'^(\s*)(\d+\.|-|\*) .*')
     for line in task.name.split('\n'):
-        m = regex.search(line)
+        m = regex.search(line.strip())
         if m:
             indent = ' '*(len(m.group(1)) + len(m.group(2)) + 1)
             name += textwrap.wrap(line.strip(), 60, initial_indent=' '*len(m.group(1)), subsequent_indent=indent, break_on_hyphens=True, break_long_words=False)
